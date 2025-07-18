@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <title>Zoznam médií – Web File Storager</title>
+  <style>
+    body {font-family: system-ui, sans-serif; padding:2rem; max-width:60ch; margin:auto;}
+    li  {margin:.25rem 0;}
+    code{background:#f0f0f0; padding:.1rem .3rem; border-radius:3px;}
+  </style>
+</head>
+<body>
+  <h1>Médiá v <code>/data</code></h1>
+  <ul>
+    {% for f in media_files %}
+      <li>{{ f }}</li>
+    {% empty %}
+      <li><em>V adresári /data sa nenašli žiadne podporované súbory.</em></li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
