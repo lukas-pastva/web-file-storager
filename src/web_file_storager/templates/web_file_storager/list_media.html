@@ -4,40 +4,85 @@
   <meta charset="utf-8">
   <title>Médiá – Web File Storager</title>
   <style>
-    body {font-family: system-ui, sans-serif; padding:2rem; max-width:1200px; margin:auto;}
-    form{margin-bottom:2rem;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;}
-    .thumb{width:100%;height:150px;object-fit:cover;border-radius:6px;box-shadow:0 2px 4px #0002;}
-    .name{font-size:.85rem;word-break:break-all;margin-top:.3rem;text-align:center;}
+    /* ───────────────── UI THEME ───────────────── */
+    :root{
+      --card-bg:#fff; --card-hover:#f7f9fc; --border:#d9dee3;
+      --shadow:0 4px 8px rgb(0 0 0 / .05);
+      --danger:#ff4d4f; --danger-hover:#d9363e;
+    }
+    body{
+      font-family:System-ui,sans-serif; margin:0; padding:2rem;
+      background:#f2f5f8; color:#222; max-width:1400px; margin-inline:auto;
+    }
+    h1{margin-top:0;}
+    /* ───────────────── Upload form ───────────────── */
+    form.upload{margin-block:1.5rem 2rem; display:flex; gap:.5rem;}
+    button, input[type="file"]{font:inherit;}
+    /* ───────────────── Gallery grid ───────────────── */
+    .grid{
+      display:grid; gap:1.5rem;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    }
+    .card{
+      position:relative; padding:.75rem; border:1px solid var(--border);
+      border-radius:12px; background:var(--card-bg); box-shadow:var(--shadow);
+      transition:background .2s, transform .15s;
+    }
+    .card:hover{background:var(--card-hover); transform:translateY(-2px);}
+    .thumb{
+      width:100%; height:160px; object-fit:cover; border-radius:8px;
+      background:#eef1f5; display:flex; align-items:center; justify-content:center;
+      font-size:2rem;
+    }
+    .name{margin-top:.5rem; font-size:.85rem; word-break:break-all; text-align:center;}
+    /* ───────────────── Delete button ───────────────── */
+    .del-form{position:absolute; top:6px; right:6px;}
+    .del-btn{
+      border:none; background:var(--danger); color:#fff; width:28px; height:28px;
+      border-radius:50%; cursor:pointer; font-size:1rem; line-height:28px;
+      display:grid; place-items:center; padding:0;
+      transition:background .15s;
+    }
+    .del-btn:hover{background:var(--danger-hover);}
   </style>
 </head>
 <body>
   <h1>Médiá v <code>/data</code></h1>
 
   <!-- Upload -->
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" enctype="multipart/form-data" class="upload">
     {% csrf_token %}
-    {{ form.file }} 
+    <input type="file" name="file" required>
     <button type="submit">Nahrať</button>
   </form>
 
-  <!-- Galéria / Zoznam -->
+  <!-- Gallery -->
   <div class="grid">
     {% for m in media %}
-      <div>
+      <div class="card">
+        <!-- Delete button -->
+        <form method="post" class="del-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="filename" value="{{ m.name }}">
+          <button class="del-btn" title="Zmazať">×</button>
+        </form>
+
+        <!-- Thumbnail / icon -->
         <a href="{{ m.url }}" target="_blank" title="Otvoriť v novom okne">
           {% if m.type == "image" %}
             <img src="{{ m.url }}" alt="{{ m.name }}" class="thumb">
+          {% elif m.type == "video" %}
+            <div class="thumb">🎞️</div>
           {% else %}
-            <div class="thumb" style="display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
-              {% if m.type == "video" %}🎞️{% else %}📄{% endif %}
-            </div>
+            <div class="thumb">📄</div>
           {% endif %}
         </a>
+
         <div class="name">{{ m.name }}</div>
       </div>
     {% empty %}
-      <p><em>V adresári /data sa nenašli žiadne podporované súbory.</em></p>
+      <p><em>Adresár /data je prázdny.</em></p>
     {% endfor %}
   </div>
 </body>
