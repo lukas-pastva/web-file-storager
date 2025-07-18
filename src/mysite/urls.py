@@ -1,25 +1,40 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
+from django.http import FileResponse, Http404
+from pathlib import Path
+import logging
 
 urlpatterns = [
-    # main web-file-storager app
     path("", include("web_file_storager.urls")),
 ]
 
-# ------------------------------------------------------------------
-# MEDIA FILES
-# ------------------------------------------------------------------
-# For this small utility app we expose /media/ directly from Django,
-# so image thumbnails & full‑size files work out‑of‑the‑box even if
-# DEBUG=False (e.g. in Docker/Gunicorn without Nginx in front).
-#
-# In a larger production stack you’d typically move this to Nginx:
-#     location /media/ { alias /data/; }
-# but keeping it here keeps the container self‑contained.
-# ------------------------------------------------------------------
-urlpatterns += static(
-    settings.MEDIA_URL,
-    document_root=settings.MEDIA_ROOT,
-    show_indexes=True,   # directory index if someone hits /media/
-)
+# ─────────────────────────────────────────────────────────────
+#  VLASTNÉ SERVOVANIE MÉDIÍ – funguje aj keď DEBUG=False
+# ─────────────────────────────────────────────────────────────
+logger = logging.getLogger("media")
+
+def media_serve(request, path: str):
+    """
+    Bezpečne vráti súbor z /data.
+    • Stráži path‑traversal.
+    • Loguje do stdout, aby si v pod/cont‑logu videl, čo sa servuje.
+    """
+    file_path = (settings.MEDIA_DIR / path).resolve()
+
+    try:
+        # path‑traversal guard
+        file_path.relative_to(settings.MEDIA_DIR)
+    except ValueError:
+        logger.warning("❌  Traversal attempt: %s", path)
+        raise Http404()
+
+    if not file_path.exists():
+        logger.warning("❌  File not found: %s", file_path)
+        raise Http404()
+
+    logger.info("📤  Serving media: %s", file_path)
+    return FileResponse(open(file_path, "rb"))
+
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", media_serve, name="media"),
+]
