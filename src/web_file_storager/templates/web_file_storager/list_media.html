@@ -7,10 +7,20 @@
     body {font-family: system-ui, sans-serif; padding:2rem; max-width:60ch; margin:auto;}
     li  {margin:.25rem 0;}
     code{background:#f0f0f0; padding:.1rem .3rem; border-radius:3px;}
+    form{margin-bottom:2rem;}
   </style>
 </head>
 <body>
   <h1>Médiá v <code>/data</code></h1>
+
+  <!-- Upload form -->
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.file }} 
+    <button type="submit">Nahrať</button>
+  </form>
+
+  <!-- Zoznam -->
   <ul>
     {% for f in media_files %}
       <li>{{ f }}</li>
